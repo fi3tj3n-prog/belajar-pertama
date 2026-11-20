@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>fi3tj3n-prog · v2</title>
+<title>fi3tj3n-prog · v3</title>
 <meta name="theme-color" content="#04030a">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,6 +23,8 @@
   .hint { opacity: .6; animation: float 3s ease-in-out infinite; pointer-events: none; }
   @keyframes float { 50% { opacity: .95; transform: translateY(-4px); } }
   a { color: #cbd3ff; opacity: .55; text-decoration: none; }
+  .hint2 { position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 12px; opacity: .6; pointer-events: none; animation: float 3s ease-in-out infinite; }
+  .btn { font: 600 13px system-ui, sans-serif; color: #fff; padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .count { font-family: ui-monospace, Menlo, monospace; opacity: .5; pointer-events: none; }
   .intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 55%, rgba(30,15,60,.6), #04030a 70%); transition: opacity .8s; z-index: 5; }
   .intro button { font: 600 17px system-ui, sans-serif; color: #fff; padding: 16px 30px; border-radius: 999px; border: 1px solid rgba(200,170,255,.5); background: rgba(120,80,255,.18); backdrop-filter: blur(8px); box-shadow: 0 0 40px rgba(150,100,255,.35); animation: pulse 2s ease-in-out infinite; }
@@ -41,9 +43,12 @@
 
 <div class="bottom">
   <a href="v1.html">← versi 1</a>
-  <span class="hint">🎵 sentuh · geser · miringkan HP</span>
+  <button class="btn" id="photoBtn">📷 Pasang foto</button>
   <span class="count" id="count">nada: 0</span>
 </div>
+
+<div class="hint2">🎵 sentuh · geser · miringkan HP</div>
+<input type="file" id="file" accept="image/*" hidden>
 
 <div class="intro" id="intro"><button id="start">✨ Mulai (nyalakan suara)</button></div>
 <div class="err" id="err">Browser ini belum mendukung WebGL 😢<br>Coba buka di Chrome terbaru.</div>
@@ -55,6 +60,13 @@ uniform float T;
 uniform vec2 A;
 uniform float P;
 uniform vec4 RP[6];
+uniform sampler2D IMG;
+uniform float HAS;
+uniform float IMGA;
+
+const vec3 IA = vec3(0.86, 0.82, 0.9);
+const vec3 IB = vec3(0.22);
+const vec3 ID = vec3(0.0, 0.33, 0.67);
 
 float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float n3(vec3 x){
@@ -64,17 +76,39 @@ float n3(vec3 x){
 }
 float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n3(p); p = p * 2.03 + vec3(1.7, 9.2, 3.1); a *= 0.5; } return s; }
 
+// Gradasi warna dari bawah ke atas: emas -> pink senja -> mint lavender -> biru es
+vec3 m4(vec3 a, vec3 b, vec3 c, vec3 d, float k){
+  float x = clamp(k, 0.0, 1.0) * 3.0;
+  if (x < 1.0) return mix(a, b, smoothstep(0.0, 1.0, x));
+  if (x < 2.0) return mix(b, c, smoothstep(0.0, 1.0, x - 1.0));
+  return mix(c, d, smoothstep(0.0, 1.0, x - 2.0));
+}
+vec3 P0(float k){ return m4(vec3(0.03,0.02,0.01), vec3(0.38,0.2,0.34), vec3(0.1,0.08,0.18), vec3(0.01,0.025,0.06), k); }
+vec3 P1(float k){ return m4(vec3(0.3,0.19,0.07), vec3(1.3,0.55,0.75), vec3(0.6,0.45,1.0), vec3(0.08,0.22,0.45), k); }
+vec3 P2(float k){ return m4(vec3(0.9,0.62,0.22), vec3(1.6,0.95,0.6), vec3(0.45,1.2,1.0), vec3(0.45,0.75,1.0), k); }
+vec3 P3(float k){ return m4(vec3(1.0,0.78,0.4), vec3(1.0,0.85,1.2), vec3(1.0,0.85,1.0), vec3(0.85,0.95,1.0), k); }
+
 vec3 sky(vec3 d){
   vec3 q = d * 1.8;
   float w = fbm(q + vec3(0.0, 0.0, T * 0.04));
   float n = fbm(q * 1.3 + w * 2.2 + vec3(T * 0.03, 0.0, 0.0));
-  vec3 c = vec3(0.01, 0.005, 0.03);
-  c = mix(c, vec3(0.25, 0.05, 0.45), smoothstep(0.25, 0.65, n));
-  c = mix(c, vec3(0.05, 0.45, 0.75), smoothstep(0.5, 0.8, n * w * 1.6));
-  c += vec3(1.0, 0.35, 0.55) * pow(smoothstep(0.45, 0.9, n), 3.0) * 0.9;
-  float s = h3(floor(d * 180.0));
-  c += vec3(0.9, 0.95, 1.0) * step(0.996, s) * (0.6 + 0.4 * sin(T * 3.0 + s * 100.0));
+  float k = d.y * 0.95 + 0.5 + (w - 0.5) * 0.35;
+  vec3 c = P0(k);
+  c = mix(c, P1(k), smoothstep(0.25, 0.65, n));
+  c = mix(c, P2(k), smoothstep(0.5, 0.8, n * w * 1.6));
+  c += P3(k) * pow(smoothstep(0.45, 0.9, n), 3.0) * 0.9;
+  vec3 g = d * 180.0; float s = h3(floor(g));
+  c += vec3(1.0) * step(0.996, s) * smoothstep(0.6, 0.2, length(fract(g) - 0.5)) * (0.6 + 0.4 * sin(T * 3.0 + s * 100.0)) * smoothstep(0.4, 0.7, k);
   return c;
+}
+
+// Foto dipasang memenuhi layar (seperti "cover")
+vec3 photo(vec2 s){
+  float sa = R.x / R.y;
+  vec2 c = s - 0.5;
+  if (IMGA > sa) c.x *= sa / IMGA; else c.y *= IMGA / sa;
+  c *= 0.92;
+  return texture2D(IMG, clamp(c + 0.5, 0.001, 0.999)).rgb;
 }
 
 mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
@@ -96,7 +130,8 @@ vec3 nrm(vec3 p){
 }
 
 void main(){
-  vec2 uv = (gl_FragCoord.xy - 0.5 * R) / min(R.x, R.y);
+  float mn = min(R.x, R.y);
+  vec2 uv = (gl_FragCoord.xy - 0.5 * R) / mn;
 
   // gelombang dari setiap sentuhan
   vec3 rc = vec3(0.0);
@@ -109,9 +144,11 @@ void main(){
       float ring = dl - age * 0.55;
       float w = exp(-ring * ring * 300.0) * exp(-age * 1.4);
       uv -= dv / (dl + 0.001) * w * 0.03;
-      rc += (0.5 + 0.5 * cos(6.2831 * (r.w + vec3(0.0, 0.33, 0.67)))) * w * 0.6;
+      rc += (IA + IB * cos(6.2831 * (r.w + ID))) * w * 0.5;
     }
   }
+  vec2 suv = uv * mn / R + 0.5;
+  vec2 par = vec2(sin(A.x), A.y) * 0.03;
 
   vec3 ro = vec3(0.0, 0.0, 5.6);
   vec3 rd = normalize(vec3(uv, -1.6));
@@ -129,21 +166,33 @@ void main(){
   if (hit) {
     vec3 p = ro + rd * t, n = nrm(p);
     float fr = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
-    vec3 refl = sky(reflect(rd, n));
-    vec3 ir = 0.5 + 0.5 * cos(6.2831 * (fr * 1.2 + dot(n, vec3(0.3, 0.5, 0.2)) + T * 0.08 + vec3(0.0, 0.33, 0.67)));
     vec3 l = normalize(vec3(0.6, 0.8, 0.5));
     float dif = max(dot(n, l), 0.0);
     float spec = pow(max(dot(reflect(rd, n), l), 0.0), 40.0);
-    col = ir * (0.12 + 0.25 * dif) + refl * (0.35 + 0.65 * fr) + spec * 1.2;
+    vec3 ir = IA + IB * cos(6.2831 * (fr * 1.2 + dot(n, vec3(0.3, 0.5, 0.2)) + T * 0.08 + ID));
+    vec3 rim = P3(n.y * 0.5 + 0.5);
+    if (HAS > 0.5) {
+      // bola kaca: foto terlihat melengkung di dalamnya
+      vec3 rr = refract(rd, n, 0.69);
+      vec3 thru = photo(suv + par + (rr.xy - rd.xy) * 0.35);
+      vec3 rf = photo(0.5 + reflect(rd, n).xy * 0.45);
+      col = thru * (1.0 - fr) * 0.95 + rf * fr * 0.8 + ir * 0.12 + rim * fr * 0.35 + spec * 1.4;
+    } else {
+      vec3 refl = sky(reflect(rd, n));
+      col = ir * (0.38 + 0.5 * dif) + refl * (0.2 + 0.8 * fr) + rim * fr * 0.7 + spec * 1.6;
+    }
   } else {
-    col = sky(rd);
-    col += (0.5 + 0.5 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + T * 0.05))) * exp(-md * 6.0) * 0.35 * (1.0 + P);
+    col = HAS > 0.5 ? photo(suv + par) : sky(rd);
+    col += (IA + IB * cos(6.2831 * (ID + T * 0.05))) * exp(-md * 6.0) * 0.35 * (1.0 + P) * (HAS > 0.5 ? 0.3 : 1.0);
   }
   col += rc;
   col *= 1.0 - 0.18 * dot(uv, uv);
-  col = col / (1.0 + col);
-  col = pow(col, vec3(0.85));
-  gl_FragColor = vec4(col, 1.0);
+  if (HAS < 0.5) {
+    col = col / (1.0 + col);
+    col = pow(col, vec3(0.85));
+    col = mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, 1.3);
+  }
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 </script>
 
@@ -165,7 +214,41 @@ gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
 gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 const U = n => gl.getUniformLocation(prog, n);
-const uR = U('R'), uT = U('T'), uA = U('A'), uP = U('P'), uRP = U('RP');
+const uR = U('R'), uT = U('T'), uA = U('A'), uP = U('P'), uRP = U('RP'), uHAS = U('HAS'), uIMGA = U('IMGA');
+
+// ---------- Foto ----------
+// Foto hanya diproses di HP-mu sendiri, tidak diunggah ke mana pun.
+const tex = gl.createTexture();
+gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+[gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.uniform1i(U('IMG'), 0);
+let hasPhoto = 0, imgAspect = 1;
+const photoBtn = document.getElementById('photoBtn'), fileIn = document.getElementById('file');
+photoBtn.addEventListener('click', () => {
+  if (hasPhoto) { hasPhoto = 0; photoBtn.textContent = '📷 Pasang foto'; tap(innerWidth / 2, innerHeight / 2); return; }
+  fileIn.click();
+});
+fileIn.addEventListener('change', () => {
+  const f = fileIn.files[0]; if (!f) return;
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 2048 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    imgAspect = c.width / c.height; hasPhoto = 1;
+    photoBtn.textContent = '✕ Hapus foto';
+    URL.revokeObjectURL(img.src); fileIn.value = '';
+    tap(innerWidth / 2, innerHeight / 2);
+  };
+  img.src = URL.createObjectURL(f);
+});
 
 // Resolusi menyesuaikan kemampuan HP supaya tetap mulus
 let scale = Math.min(window.devicePixelRatio || 1, 2) * 0.6;
@@ -266,6 +349,8 @@ function frame(ts) {
   gl.uniform2f(uA, cam.x, cam.y);
   gl.uniform1f(uP, pulse);
   gl.uniform4fv(uRP, ripples);
+  gl.uniform1f(uHAS, hasPhoto);
+  gl.uniform1f(uIMGA, imgAspect);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   requestAnimationFrame(frame);
 }
@@ -273,7 +358,8 @@ requestAnimationFrame(frame);
 
 // ---------- Teks mengetik ----------
 const lines = [
-  'versi 2: lebih keren. ✨',
+  'versi 3: semua warna jadi satu 🌈',
+  '📷 pasang fotomu → jadi bola kaca 3D',
   'sentuh layar = main musik 🎵',
   'geser = putar bola kristal',
   'miringkan HP = lihat sekeliling',

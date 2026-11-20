@@ -4,7 +4,10 @@ Repo pertama saya di GitHub ✨
 
 **Lihat langsung:** https://fi3tj3n-prog.github.io/belajar-pertama/
 
-## Versi 2 — `index.html`
+## Versi 3 — `index.html`
+Semua warna digabung jadi satu gradasi: biru es, lavender-mint, pink senja, dan emas.
+- **📷 Pasang foto** dari galeri: fotomu jadi latar belakang, dan kristalnya berubah jadi bola kaca 3D yang membiaskan foto itu. Foto hanya diproses di HP-mu, tidak diunggah ke mana pun.
+
 Bola kristal cair 3D yang terus berubah bentuk, melayang di tengah nebula.
 - **Sentuh layar** untuk memainkan nada (tangga nada pentatonik) dan memunculkan gelombang warna
 - **Geser** untuk memutar kamera
