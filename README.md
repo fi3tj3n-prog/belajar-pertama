@@ -6,7 +6,8 @@ Repo pertama saya di GitHub ✨
 
 ## Versi 3 — `index.html`
 Semua warna digabung jadi satu gradasi: biru es, lavender-mint, pink senja, dan emas.
-- **📷 Pasang foto** dari galeri: fotomu jadi latar belakang, dan kristalnya berubah jadi bola kaca 3D yang membiaskan foto itu. Foto hanya diproses di HP-mu, tidak diunggah ke mana pun.
+- **📷 Pasang foto** dari galeri: fotomu masuk ke dalam bola kaca 3D yang terus berubah bentuk.
+- **💾 Simpan wallpaper**: menyimpan tampilan saat itu sebagai gambar seukuran layar HP. Foto hanya diproses di HP-mu, tidak diunggah ke mana pun.
 
 Bola kristal cair 3D yang terus berubah bentuk, melayang di tengah nebula.
 - **Sentuh layar** untuk memainkan nada (tangga nada pentatonik) dan memunculkan gelombang warna

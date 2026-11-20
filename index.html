@@ -19,13 +19,15 @@
   .type { margin-top: 14px; font: clamp(14px, 4vw, 19px) ui-monospace, "SF Mono", Menlo, monospace; color: #d6dcff; min-height: 1.5em; }
   .type::after { content: "▍"; margin-left: 2px; color: #c8f; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
-  .bottom { position: fixed; bottom: calc(22px + env(safe-area-inset-bottom)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; font-size: 12px; }
+  .bottom { position: fixed; bottom: calc(22px + env(safe-area-inset-bottom)); left: 0; right: 0; display: flex; gap: 10px; justify-content: center; align-items: center; padding: 0 18px; font-size: 12px; }
   .hint { opacity: .6; animation: float 3s ease-in-out infinite; pointer-events: none; }
   @keyframes float { 50% { opacity: .95; transform: translateY(-4px); } }
   a { color: #cbd3ff; opacity: .55; text-decoration: none; }
   .hint2 { position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 12px; opacity: .6; pointer-events: none; animation: float 3s ease-in-out infinite; }
   .btn { font: 600 13px system-ui, sans-serif; color: #fff; padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .count { font-family: ui-monospace, Menlo, monospace; opacity: .5; pointer-events: none; }
+  .count { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 14px; font: 11px ui-monospace, Menlo, monospace; opacity: .45; pointer-events: none; }
+  .v1 { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 14px; font-size: 11px; }
+  .toast { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 14px 20px; border-radius: 14px; background: rgba(10,8,25,.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 6; text-align: center; }
   .intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 55%, rgba(30,15,60,.6), #04030a 70%); transition: opacity .8s; z-index: 5; }
   .intro button { font: 600 17px system-ui, sans-serif; color: #fff; padding: 16px 30px; border-radius: 999px; border: 1px solid rgba(200,170,255,.5); background: rgba(120,80,255,.18); backdrop-filter: blur(8px); box-shadow: 0 0 40px rgba(150,100,255,.35); animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 50% { box-shadow: 0 0 70px rgba(150,100,255,.65); } }
@@ -42,11 +44,13 @@
 </div>
 
 <div class="bottom">
-  <a href="v1.html">← versi 1</a>
   <button class="btn" id="photoBtn">📷 Pasang foto</button>
-  <span class="count" id="count">nada: 0</span>
+  <button class="btn" id="saveBtn">💾 Simpan wallpaper</button>
 </div>
 
+<a class="v1" href="v1.html">← versi 1</a>
+<span class="count" id="count">nada: 0</span>
+<div class="toast" id="toast"></div>
 <div class="hint2">🎵 sentuh · geser · miringkan HP</div>
 <input type="file" id="file" accept="image/*" hidden>
 
@@ -102,12 +106,20 @@ vec3 sky(vec3 d){
   return c;
 }
 
-// Foto dipasang memenuhi layar (seperti "cover")
-vec3 photo(vec2 s){
-  float sa = R.x / R.y;
-  vec2 c = s - 0.5;
-  if (IMGA > sa) c.x *= sa / IMGA; else c.y *= IMGA / sa;
-  c *= 0.92;
+
+vec3 tm(vec3 c){
+  c = c / (1.0 + c);
+  c = pow(c, vec3(0.85));
+  return mix(vec3(dot(c, vec3(0.299, 0.587, 0.114))), c, 1.3);
+}
+
+// Foto ditaruh di bidang di tengah bola, menghadap kamera.
+// Sinar yang dibiaskan permukaan kaca menembus bidang ini, jadi foto terlihat seperti di dalam bola kaca.
+vec3 ballPhoto(vec3 p, vec3 rr, vec3 cr, vec3 cu, vec3 cf){
+  float s = max(-dot(p, cf) / max(dot(rr, cf), 0.05), 0.0);
+  vec3 x = p + rr * s;
+  vec2 c = vec2(dot(x, cr), dot(x, cu)) / 1.05 * 0.5;
+  if (IMGA > 1.0) c.x /= IMGA; else c.y *= IMGA;
   return texture2D(IMG, clamp(c + 0.5, 0.001, 0.999)).rgb;
 }
 
@@ -147,13 +159,13 @@ void main(){
       rc += (IA + IB * cos(6.2831 * (r.w + ID))) * w * 0.5;
     }
   }
-  vec2 suv = uv * mn / R + 0.5;
-  vec2 par = vec2(sin(A.x), A.y) * 0.03;
 
-  vec3 ro = vec3(0.0, 0.0, 5.6);
+  vec3 ro = vec3(0.0, 0.0, 5.6 - 1.3 * HAS);
   vec3 rd = normalize(vec3(uv, -1.6));
   mat2 ry = rot(A.x), rx = rot(A.y);
   ro.yz *= rx; rd.yz *= rx; ro.xz *= ry; rd.xz *= ry;
+  vec3 cr = vec3(1.0, 0.0, 0.0), cu = vec3(0.0, 1.0, 0.0), cf = vec3(0.0, 0.0, -1.0);
+  cr.yz *= rx; cu.yz *= rx; cf.yz *= rx; cr.xz *= ry; cu.xz *= ry; cf.xz *= ry;
 
   float t = 0.0, md = 1e3; bool hit = false;
   for (int i = 0; i < 70; i++) {
@@ -162,7 +174,7 @@ void main(){
     t += d * 0.9; if (t > 12.0) break;
   }
 
-  vec3 col;
+  vec3 col, add = vec3(0.0);
   if (hit) {
     vec3 p = ro + rd * t, n = nrm(p);
     float fr = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
@@ -172,27 +184,19 @@ void main(){
     vec3 ir = IA + IB * cos(6.2831 * (fr * 1.2 + dot(n, vec3(0.3, 0.5, 0.2)) + T * 0.08 + ID));
     vec3 rim = P3(n.y * 0.5 + 0.5);
     if (HAS > 0.5) {
-      // bola kaca: foto terlihat melengkung di dalamnya
-      vec3 rr = refract(rd, n, 0.69);
-      vec3 thru = photo(suv + par + (rr.xy - rd.xy) * 0.35);
-      vec3 rf = photo(0.5 + reflect(rd, n).xy * 0.45);
-      col = thru * (1.0 - fr) * 0.95 + rf * fr * 0.8 + ir * 0.12 + rim * fr * 0.35 + spec * 1.4;
+      add = ballPhoto(p, refract(rd, n, 0.9), cr, cu, cf) * (1.0 - fr * 0.85);
+      col = sky(reflect(rd, n)) * fr * 0.9 + rim * fr * 0.4 + spec * 1.4;
     } else {
       vec3 refl = sky(reflect(rd, n));
       col = ir * (0.38 + 0.5 * dif) + refl * (0.2 + 0.8 * fr) + rim * fr * 0.7 + spec * 1.6;
     }
   } else {
-    col = HAS > 0.5 ? photo(suv + par) : sky(rd);
-    col += (IA + IB * cos(6.2831 * (ID + T * 0.05))) * exp(-md * 6.0) * 0.35 * (1.0 + P) * (HAS > 0.5 ? 0.3 : 1.0);
+    col = sky(rd);
+    col += (IA + IB * cos(6.2831 * (ID + T * 0.05))) * exp(-md * 6.0) * 0.35 * (1.0 + P) * (HAS > 0.5 ? 0.5 : 1.0);
   }
   col += rc;
-  col *= 1.0 - 0.18 * dot(uv, uv);
-  if (HAS < 0.5) {
-    col = col / (1.0 + col);
-    col = pow(col, vec3(0.85));
-    col = mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, 1.3);
-  }
-  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+  float vig = 1.0 - 0.18 * dot(uv, uv);
+  gl_FragColor = vec4(clamp(tm(col * vig) + add * vig, 0.0, 1.0), 1.0);
 }
 </script>
 
@@ -235,7 +239,8 @@ fileIn.addEventListener('change', () => {
   const f = fileIn.files[0]; if (!f) return;
   const img = new Image();
   img.onload = () => {
-    const k = Math.min(1, 2048 / Math.max(img.width, img.height));
+    const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), 4096);
+    const k = Math.min(1, max / Math.max(img.width, img.height));
     const c = document.createElement('canvas');
     c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -251,7 +256,9 @@ fileIn.addEventListener('change', () => {
 });
 
 // Resolusi menyesuaikan kemampuan HP supaya tetap mulus
-let scale = Math.min(window.devicePixelRatio || 1, 2) * 0.6;
+const DPR = Math.min(window.devicePixelRatio || 1, 3);
+let scale = DPR * 0.8;
+const minScale = Math.max(0.6, DPR * 0.45);
 function resize() {
   cv.width = Math.max(1, Math.round(innerWidth * scale));
   cv.height = Math.max(1, Math.round(innerHeight * scale));
@@ -337,13 +344,17 @@ let frames = 0, acc = 0, last = performance.now();
 function frame(ts) {
   const dt = ts - last; last = ts;
   frames++; acc += dt;
-  if (frames === 40) { if (acc / 40 > 30 && scale > 0.35) { scale *= 0.8; resize(); } frames = 0; acc = 0; }
+  if (frames === 40) { if (acc / 40 > 30 && scale > minScale) { scale = Math.max(minScale, scale * 0.85); resize(); } frames = 0; acc = 0; }
 
   const T = now();
   pulse *= 0.96;
   const tx = drag.x + tilt.x + T * 0.08, ty = drag.y + tilt.y;
   cam.x += (tx - cam.x) * 0.08; cam.y += (ty - cam.y) * 0.08;
 
+  draw(T);
+  requestAnimationFrame(frame);
+}
+function draw(T) {
   gl.uniform2f(uR, cv.width, cv.height);
   gl.uniform1f(uT, T);
   gl.uniform2f(uA, cam.x, cam.y);
@@ -352,14 +363,34 @@ function frame(ts) {
   gl.uniform1f(uHAS, hasPhoto);
   gl.uniform1f(uIMGA, imgAspect);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
-  requestAnimationFrame(frame);
 }
+
+// ---------- Simpan wallpaper ----------
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.style.opacity = 1;
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.opacity = 0, 3500);
+}
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const d = window.devicePixelRatio || 1;
+  const w = Math.round(innerWidth * d), h = Math.round(innerHeight * d);
+  ripples.fill(-99); pulse = 0;
+  cv.width = w; cv.height = h; gl.viewport(0, 0, w, h);
+  draw(now());
+  const url = cv.toDataURL('image/png');
+  resize();
+  const a = document.createElement('a');
+  a.href = url; a.download = 'wallpaper-' + Date.now() + '.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('💾 Tersimpan (' + w + '×' + h + ')<br>Cek folder Download, lalu pasang dari Galeri');
+});
 requestAnimationFrame(frame);
 
 // ---------- Teks mengetik ----------
 const lines = [
   'versi 3: semua warna jadi satu 🌈',
-  '📷 pasang fotomu → jadi bola kaca 3D',
+  '📷 pasang fotomu → masuk ke bola kaca 3D',
+  '💾 simpan jadi wallpaper HP',
   'sentuh layar = main musik 🎵',
   'geser = putar bola kristal',
   'miringkan HP = lihat sekeliling',
