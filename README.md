@@ -5,7 +5,7 @@ Repo pertama saya di GitHub ✨
 **Lihat langsung:** https://fi3tj3n-prog.github.io/belajar-pertama/
 
 ## Versi 3 — `index.html`
-Semua warna digabung jadi satu gradasi: biru es, lavender-mint, pink senja, dan emas.
+Nebula ungu dengan bola kristal pelangi.
 - **📷 Pasang foto** dari galeri: fotomu masuk ke dalam bola kaca 3D yang terus berubah bentuk.
 - **💾 Simpan wallpaper**: menyimpan tampilan saat itu sebagai gambar seukuran layar HP. Foto hanya diproses di HP-mu, tidak diunggah ke mana pun.
 
