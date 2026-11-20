@@ -3,129 +3,281 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>fi3tj3n-prog</title>
-<meta name="theme-color" content="#05060f">
+<title>fi3tj3n-prog · v2</title>
+<meta name="theme-color" content="#04030a">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; overflow: hidden; background: #05060f; color: #eef; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; touch-action: none; }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  .ui { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; pointer-events: none; }
-  .hello { font-size: 14px; letter-spacing: .4em; text-transform: uppercase; opacity: .6; margin-bottom: 14px; }
-  h1 { font-size: clamp(40px, 13vw, 110px); font-weight: 800; line-height: 1; letter-spacing: -.03em;
-       background: linear-gradient(90deg, #7af, #c7f, #f7a, #fc6, #7fd, #7af); background-size: 300% 100%;
+  html, body { height: 100%; overflow: hidden; background: #04030a; color: #eef; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .top { position: fixed; top: calc(34px + env(safe-area-inset-top)); left: 0; right: 0; text-align: center; padding: 0 20px; pointer-events: none; }
+  .hello { font-size: 12px; letter-spacing: .45em; text-transform: uppercase; opacity: .55; margin-bottom: 10px; }
+  h1 { font-size: clamp(34px, 11vw, 84px); font-weight: 800; line-height: 1; letter-spacing: -.03em;
+       background: linear-gradient(90deg, #8af, #c8f, #f8b, #fd8, #8fe, #8af); background-size: 300% 100%;
        -webkit-background-clip: text; background-clip: text; color: transparent; animation: shift 8s linear infinite;
-       filter: drop-shadow(0 0 30px rgba(160,120,255,.35)); }
+       filter: drop-shadow(0 0 24px rgba(170,130,255,.4)); }
   @keyframes shift { to { background-position: 300% 0; } }
-  .type { margin-top: 18px; font-size: clamp(16px, 4.6vw, 22px); min-height: 1.5em; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: #cfd6ff; }
-  .type::after { content: "▍"; margin-left: 2px; animation: blink 1s steps(1) infinite; color: #c7f; }
+  .type { margin-top: 14px; font: clamp(14px, 4vw, 19px) ui-monospace, "SF Mono", Menlo, monospace; color: #d6dcff; min-height: 1.5em; }
+  .type::after { content: "▍"; margin-left: 2px; color: #c8f; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
-  .hint { position: fixed; bottom: calc(28px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 13px; opacity: .55; pointer-events: none; animation: float 3s ease-in-out infinite; }
-  @keyframes float { 50% { transform: translateY(-6px); opacity: .85; } }
-  .count { position: fixed; top: calc(16px + env(safe-area-inset-top)); right: 18px; font: 12px ui-monospace, Menlo, monospace; opacity: .45; pointer-events: none; }
+  .bottom { position: fixed; bottom: calc(22px + env(safe-area-inset-bottom)); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; font-size: 12px; }
+  .hint { opacity: .6; animation: float 3s ease-in-out infinite; pointer-events: none; }
+  @keyframes float { 50% { opacity: .95; transform: translateY(-4px); } }
+  a { color: #cbd3ff; opacity: .55; text-decoration: none; }
+  .count { font-family: ui-monospace, Menlo, monospace; opacity: .5; pointer-events: none; }
+  .intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 55%, rgba(30,15,60,.6), #04030a 70%); transition: opacity .8s; z-index: 5; }
+  .intro button { font: 600 17px system-ui, sans-serif; color: #fff; padding: 16px 30px; border-radius: 999px; border: 1px solid rgba(200,170,255,.5); background: rgba(120,80,255,.18); backdrop-filter: blur(8px); box-shadow: 0 0 40px rgba(150,100,255,.35); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 70px rgba(150,100,255,.65); } }
+  .err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 30px; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="ui">
+
+<div class="top">
   <div class="hello">hello, world — saya</div>
   <h1>fi3tj3n-prog</h1>
   <div class="type" id="type"></div>
 </div>
-<div class="count" id="count">ledakan: 0</div>
-<div class="hint">✨ sentuh &amp; geser layar ✨</div>
+
+<div class="bottom">
+  <a href="v1.html">← versi 1</a>
+  <span class="hint">🎵 sentuh · geser · miringkan HP</span>
+  <span class="count" id="count">nada: 0</span>
+</div>
+
+<div class="intro" id="intro"><button id="start">✨ Mulai (nyalakan suara)</button></div>
+<div class="err" id="err">Browser ini belum mendukung WebGL 😢<br>Coba buka di Chrome terbaru.</div>
+
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 R;
+uniform float T;
+uniform vec2 A;
+uniform float P;
+uniform vec4 RP[6];
+
+float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float n3(vec3 x){
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z);
+}
+float fbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n3(p); p = p * 2.03 + vec3(1.7, 9.2, 3.1); a *= 0.5; } return s; }
+
+vec3 sky(vec3 d){
+  vec3 q = d * 1.8;
+  float w = fbm(q + vec3(0.0, 0.0, T * 0.04));
+  float n = fbm(q * 1.3 + w * 2.2 + vec3(T * 0.03, 0.0, 0.0));
+  vec3 c = vec3(0.01, 0.005, 0.03);
+  c = mix(c, vec3(0.25, 0.05, 0.45), smoothstep(0.25, 0.65, n));
+  c = mix(c, vec3(0.05, 0.45, 0.75), smoothstep(0.5, 0.8, n * w * 1.6));
+  c += vec3(1.0, 0.35, 0.55) * pow(smoothstep(0.45, 0.9, n), 3.0) * 0.9;
+  float s = h3(floor(d * 180.0));
+  c += vec3(0.9, 0.95, 1.0) * step(0.996, s) * (0.6 + 0.4 * sin(T * 3.0 + s * 100.0));
+  return c;
+}
+
+mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+float smin(float a, float b, float k){ float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0); return mix(b, a, h) - k * h * (1.0 - h); }
+
+float map(vec3 p){
+  float d = length(p) - 0.75;
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    vec3 c = vec3(sin(T * 0.7 + fi * 1.7), cos(T * 0.9 + fi * 2.3), sin(T * 0.5 + fi * 3.1)) * (0.75 + 0.25 * sin(T * 0.3 + fi));
+    d = smin(d, length(p - c * 0.8) - (0.32 + 0.06 * fi), 0.45);
+  }
+  d += sin(p.x * 5.0 + T * 2.0) * sin(p.y * 5.0 + T * 1.7) * sin(p.z * 5.0 + T * 1.3) * (0.03 + 0.07 * P);
+  return d;
+}
+vec3 nrm(vec3 p){
+  vec2 e = vec2(0.002, 0.0);
+  return normalize(vec3(map(p + e.xyy) - map(p - e.xyy), map(p + e.yxy) - map(p - e.yxy), map(p + e.yyx) - map(p - e.yyx)));
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * R) / min(R.x, R.y);
+
+  // gelombang dari setiap sentuhan
+  vec3 rc = vec3(0.0);
+  for (int i = 0; i < 6; i++) {
+    vec4 r = RP[i];
+    float age = T - r.z;
+    if (age > 0.0 && age < 3.0) {
+      vec2 dv = uv - r.xy;
+      float dl = length(dv);
+      float ring = dl - age * 0.55;
+      float w = exp(-ring * ring * 300.0) * exp(-age * 1.4);
+      uv -= dv / (dl + 0.001) * w * 0.03;
+      rc += (0.5 + 0.5 * cos(6.2831 * (r.w + vec3(0.0, 0.33, 0.67)))) * w * 0.6;
+    }
+  }
+
+  vec3 ro = vec3(0.0, 0.0, 5.6);
+  vec3 rd = normalize(vec3(uv, -1.6));
+  mat2 ry = rot(A.x), rx = rot(A.y);
+  ro.yz *= rx; rd.yz *= rx; ro.xz *= ry; rd.xz *= ry;
+
+  float t = 0.0, md = 1e3; bool hit = false;
+  for (int i = 0; i < 70; i++) {
+    float d = map(ro + rd * t); md = min(md, d);
+    if (d < 0.001) { hit = true; break; }
+    t += d * 0.9; if (t > 12.0) break;
+  }
+
+  vec3 col;
+  if (hit) {
+    vec3 p = ro + rd * t, n = nrm(p);
+    float fr = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
+    vec3 refl = sky(reflect(rd, n));
+    vec3 ir = 0.5 + 0.5 * cos(6.2831 * (fr * 1.2 + dot(n, vec3(0.3, 0.5, 0.2)) + T * 0.08 + vec3(0.0, 0.33, 0.67)));
+    vec3 l = normalize(vec3(0.6, 0.8, 0.5));
+    float dif = max(dot(n, l), 0.0);
+    float spec = pow(max(dot(reflect(rd, n), l), 0.0), 40.0);
+    col = ir * (0.12 + 0.25 * dif) + refl * (0.35 + 0.65 * fr) + spec * 1.2;
+  } else {
+    col = sky(rd);
+    col += (0.5 + 0.5 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + T * 0.05))) * exp(-md * 6.0) * 0.35 * (1.0 + P);
+  }
+  col += rc;
+  col *= 1.0 - 0.18 * dot(uv, uv);
+  col = col / (1.0 + col);
+  col = pow(col, vec3(0.85));
+  gl_FragColor = vec4(col, 1.0);
+}
+</script>
 
 <script>
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let W, H, DPR;
+const cv = document.getElementById('c');
+const gl = cv.getContext('webgl', { antialias: false, alpha: false });
+if (!gl) { document.getElementById('err').style.display = 'flex'; document.getElementById('intro').remove(); throw 0; }
+
+function sh(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}'));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, document.getElementById('fs').textContent));
+gl.linkProgram(prog); gl.useProgram(prog);
+gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+const U = n => gl.getUniformLocation(prog, n);
+const uR = U('R'), uT = U('T'), uA = U('A'), uP = U('P'), uRP = U('RP');
+
+// Resolusi menyesuaikan kemampuan HP supaya tetap mulus
+let scale = Math.min(window.devicePixelRatio || 1, 2) * 0.6;
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = innerWidth; H = innerHeight;
-  cv.width = W * DPR; cv.height = H * DPR;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.fillStyle = '#05060f'; ctx.fillRect(0, 0, W, H);
+  cv.width = Math.max(1, Math.round(innerWidth * scale));
+  cv.height = Math.max(1, Math.round(innerHeight * scale));
+  gl.viewport(0, 0, cv.width, cv.height);
 }
 addEventListener('resize', resize); resize();
 
-// Arus partikel yang mengalir mengikuti "medan" yang terus berubah
-const N = Math.min(1400, Math.floor(W * H / 450));
-const parts = [];
-function spawn(p) { p.x = Math.random() * W; p.y = Math.random() * H; p.life = 60 + Math.random() * 200; p.vx = p.vx || 0; p.vy = p.vy || 0; return p; }
-for (let i = 0; i < N; i++) parts.push(spawn({ vx: 0, vy: 0 }));
+const ripples = new Float32Array(24).fill(-99);
+let rIdx = 0, pulse = 0, notes = 0;
+const drag = { x: 0, y: 0 }, tilt = { x: 0, y: 0 }, cam = { x: 0, y: 0 };
+let ptr = null;
+const t0 = performance.now();
+const now = () => (performance.now() - t0) / 1000;
 
-const sparks = [];
-const pointer = { x: -9999, y: -9999, down: false };
-let t = 0, hue = 220, bursts = 0;
-
-function field(x, y) {
-  const s = 0.0028;
-  return Math.sin(x * s + t * 0.6) * 1.7 + Math.cos(y * s * 1.3 - t * 0.4) * 1.7 + Math.sin((x + y) * s * 0.7 + t * 0.25) * 1.2;
+// ---------- Suara ----------
+let ac, out;
+function initAudio() {
+  if (ac) return;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  out = ac.createGain(); out.gain.value = 0.5;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3500;
+  const dl = ac.createDelay(1); dl.delayTime.value = 0.33;
+  const fb = ac.createGain(); fb.gain.value = 0.4;
+  out.connect(lp); out.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(lp);
+  lp.connect(ac.destination);
+}
+const PENTA = [0, 2, 4, 7, 9];
+function play(x, y) {
+  const i = Math.min(9, Math.floor(x / innerWidth * 10));
+  const semi = PENTA[i % 5] + 12 * Math.floor(i / 5) + (y < innerHeight / 2 ? 12 : 0);
+  if (!ac) return i;
+  const f = 196 * Math.pow(2, semi / 12), tt = ac.currentTime;
+  [[f, 'sine', 0.28], [f * 2, 'triangle', 0.06], [f * 1.003, 'sine', 0.12]].forEach(([fr, type, g]) => {
+    const o = ac.createOscillator(), e = ac.createGain();
+    o.type = type; o.frequency.value = fr;
+    e.gain.setValueAtTime(0, tt); e.gain.linearRampToValueAtTime(g, tt + 0.012);
+    e.gain.exponentialRampToValueAtTime(0.0001, tt + 2.2);
+    o.connect(e); e.connect(out); o.start(tt); o.stop(tt + 2.3);
+  });
+  return i;
 }
 
-function burst(x, y) {
-  bursts++; document.getElementById('count').textContent = 'ledakan: ' + bursts;
-  const h = Math.random() * 360, n = 90;
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2, sp = 2 + Math.random() * 6;
-    sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, h: h + Math.random() * 60 });
-  }
-  if (navigator.vibrate) navigator.vibrate(15);
+function tap(x, y) {
+  const i = play(x, y);
+  const o = rIdx * 4;
+  const m = Math.min(innerWidth, innerHeight);
+  ripples[o] = (x - innerWidth / 2) / m;
+  ripples[o + 1] = (innerHeight / 2 - y) / m;
+  ripples[o + 2] = now();
+  ripples[o + 3] = i / 10;
+  rIdx = (rIdx + 1) % 6;
+  pulse = 1;
+  document.getElementById('count').textContent = 'nada: ' + (++notes);
+  if (navigator.vibrate) navigator.vibrate(10);
 }
 
-function pos(e) { const p = e.touches ? e.touches[0] : e; return p ? { x: p.clientX, y: p.clientY } : null; }
-function down(e) { const p = pos(e); if (!p) return; pointer.x = p.x; pointer.y = p.y; pointer.down = true; burst(p.x, p.y); }
-function move(e) { const p = pos(e); if (!p) return; pointer.x = p.x; pointer.y = p.y; }
-function up() { pointer.down = false; setTimeout(() => { if (!pointer.down) { pointer.x = pointer.y = -9999; } }, 600); }
-cv.addEventListener('pointerdown', down);
-addEventListener('pointermove', move);
-addEventListener('pointerup', up);
-addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+cv.addEventListener('pointerdown', e => { ptr = { x: e.clientX, y: e.clientY }; tap(e.clientX, e.clientY); });
+addEventListener('pointermove', e => {
+  if (!ptr) return;
+  drag.x += (e.clientX - ptr.x) * 0.006;
+  drag.y = Math.max(-1.2, Math.min(1.2, drag.y + (e.clientY - ptr.y) * 0.006));
+  ptr = { x: e.clientX, y: e.clientY };
+});
+addEventListener('pointerup', () => ptr = null);
+addEventListener('pointercancel', () => ptr = null);
 
-function frame() {
-  t += 0.01; hue = (hue + 0.15) % 360;
-  ctx.fillStyle = 'rgba(5,6,15,0.08)'; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'lighter';
+addEventListener('deviceorientation', e => {
+  if (e.gamma == null) return;
+  tilt.x = e.gamma / 90 * 0.9;
+  tilt.y = ((e.beta || 45) - 45) / 90 * 0.9;
+});
 
-  for (const p of parts) {
-    const a = field(p.x, p.y);
-    p.vx = p.vx * 0.9 + Math.cos(a) * 0.35;
-    p.vy = p.vy * 0.9 + Math.sin(a) * 0.35;
-    const dx = pointer.x - p.x, dy = pointer.y - p.y, d2 = dx * dx + dy * dy;
-    if (d2 < 32000) { // pusaran di sekitar jari
-      const d = Math.sqrt(d2) + 1, f = (1 - d2 / 32000) * 1.6;
-      p.vx += (-dy / d) * f + (dx / d) * f * 0.35;
-      p.vy += (dx / d) * f + (dy / d) * f * 0.35;
-    }
-    const ox = p.x, oy = p.y;
-    p.x += p.vx; p.y += p.vy;
-    if (--p.life < 0 || p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) { spawn(p); continue; }
-    const sp = Math.min(1, Math.hypot(p.vx, p.vy) / 4);
-    ctx.strokeStyle = `hsla(${(hue + p.x * 0.08 + p.y * 0.05) % 360},90%,${45 + sp * 30}%,${0.25 + sp * 0.5})`;
-    ctx.lineWidth = 1.1;
-    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(p.x, p.y); ctx.stroke();
-  }
+document.getElementById('start').addEventListener('click', async () => {
+  try { initAudio(); await ac.resume(); } catch (_) {}
+  try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (_) {}
+  const intro = document.getElementById('intro');
+  intro.style.opacity = 0; setTimeout(() => intro.remove(), 800);
+  setTimeout(() => tap(innerWidth / 2, innerHeight * 0.55), 300);
+});
 
-  for (let i = sparks.length - 1; i >= 0; i--) {
-    const s = sparks[i];
-    s.vx *= 0.96; s.vy = s.vy * 0.96 + 0.06;
-    const ox = s.x, oy = s.y;
-    s.x += s.vx; s.y += s.vy; s.life -= 0.014;
-    if (s.life <= 0) { sparks.splice(i, 1); continue; }
-    ctx.strokeStyle = `hsla(${s.h},100%,65%,${s.life})`;
-    ctx.lineWidth = 2 * s.life + 0.5;
-    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(s.x, s.y); ctx.stroke();
-  }
+// ---------- Animasi ----------
+let frames = 0, acc = 0, last = performance.now();
+function frame(ts) {
+  const dt = ts - last; last = ts;
+  frames++; acc += dt;
+  if (frames === 40) { if (acc / 40 > 30 && scale > 0.35) { scale *= 0.8; resize(); } frames = 0; acc = 0; }
 
-  ctx.globalCompositeOperation = 'source-over';
+  const T = now();
+  pulse *= 0.96;
+  const tx = drag.x + tilt.x + T * 0.08, ty = drag.y + tilt.y;
+  cam.x += (tx - cam.x) * 0.08; cam.y += (ty - cam.y) * 0.08;
+
+  gl.uniform2f(uR, cv.width, cv.height);
+  gl.uniform1f(uT, T);
+  gl.uniform2f(uA, cam.x, cam.y);
+  gl.uniform1f(uP, pulse);
+  gl.uniform4fv(uRP, ripples);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
   requestAnimationFrame(frame);
 }
-frame();
+requestAnimationFrame(frame);
 
-// Teks mengetik sendiri
+// ---------- Teks mengetik ----------
 const lines = [
-  'baru mulai ngoding.',
-  'repo pertama: belajar-pertama',
-  'dibuat 20 November 2026',
-  'setiap ahli dulunya pemula.',
+  'versi 2: lebih keren. ✨',
+  'sentuh layar = main musik 🎵',
+  'geser = putar bola kristal',
+  'miringkan HP = lihat sekeliling',
+  '100% WebGL, tanpa library.',
   'ini baru awal. 🚀'
 ];
 const el = document.getElementById('type');
@@ -133,13 +285,11 @@ let li = 0, ci = 0, del = false;
 (function typeLoop() {
   const s = lines[li];
   el.textContent = s.slice(0, ci);
-  if (!del && ci < s.length) { ci++; setTimeout(typeLoop, 55 + Math.random() * 60); }
-  else if (!del) { del = true; setTimeout(typeLoop, 1700); }
-  else if (ci > 0) { ci--; setTimeout(typeLoop, 25); }
+  if (!del && ci < s.length) { ci++; setTimeout(typeLoop, 50 + Math.random() * 55); }
+  else if (!del) { del = true; setTimeout(typeLoop, 1800); }
+  else if (ci > 0) { ci--; setTimeout(typeLoop, 22); }
   else { del = false; li = (li + 1) % lines.length; setTimeout(typeLoop, 300); }
 })();
-
-setTimeout(() => burst(W / 2, H * 0.32), 700);
 </script>
 </body>
 </html>
